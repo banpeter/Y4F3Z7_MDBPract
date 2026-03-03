@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="qualified">
+
+
+
+    <xs:element name="bolt">
+        <xs:complexType>
+            <xs:sequence>
+
+                <xs:element name="ugyfel" type="UgyfelTipus" maxOccurs="unbounded"/>
+                <xs:element name="aru" type="AruTipus" maxOccurs="unbounded"/>
+                <xs:element name="rendeles" type="RendelesTipus" maxOccurs="unbounded"/>
+                <xs:element name="futar" type="FutarTipus" maxOccurs="unbounded"/>
+                <xs:element name="kiszallitas" type="KiszallitasTipus" maxOccurs="unbounded"/>
+                <xs:element name="jarmu" type="JarmuTipus" maxOccurs="unbounded"/>
+                <xs:element name="uzlethelyseg" type="UzlethelysegTipus" maxOccurs="unbounded"/>
+                <xs:element name="alkalmazott" type="AlkalmazottTipus" maxOccurs="unbounded"/>
+
+            </xs:sequence>
+        </xs:complexType>
+
+        <!-- Elsődleges kulcsok -->
+
+        <xs:key name="ugyfel_kulcs">
+            <xs:selector xpath="ugyfel"/>
+            <xs:field xpath="@cid"/>
+        </xs:key>
+
+        <xs:key name="aru_kulcs">
+            <xs:selector xpath="aru"/>
+            <xs:field xpath="@aid"/>
+        </xs:key>
+
+        <xs:key name="rendeles_kulcs">
+            <xs:selector xpath="rendeles"/>
+            <xs:field xpath="@rid"/>
+        </xs:key>
+
+        <xs:key name="futar_kulcs">
+            <xs:selector xpath="futar"/>
+            <xs:field xpath="@fid"/>
+        </xs:key>
+
+        <xs:key name="uzlet_kulcs">
+            <xs:selector xpath="uzlethelyseg"/>
+            <xs:field xpath="@uid"/>
+        </xs:key>
+
+        <!-- Idegen kulcsok -->
+
+        <xs:keyref name="rendeles_ugyfel_fk" refer="ugyfel_kulcs">
+            <xs:selector xpath="rendeles"/>
+            <xs:field xpath="@ugyfel_ref"/>
+        </xs:keyref>
+
+        <xs:keyref name="aru_fk" refer="aru_kulcs">
+            <xs:selector xpath="rendeles"/>
+            <xs:field xpath="@aru_ref"/>
+        </xs:keyref>
+
+        <xs:keyref name="kiszallitas_rendeles_fk" refer="rendeles_kulcs">
+            <xs:selector xpath="kiszallitas"/>
+            <xs:field xpath="@rendeles_ref"/>
+        </xs:keyref>
+
+        <xs:keyref name="kiszallitas_futar_fk" refer="futar_kulcs">
+            <xs:selector xpath="kiszallitas"/>
+            <xs:field xpath="@futar_ref"/>
+        </xs:keyref>
+
+        <xs:keyref name="alkalmazott_uzlet_fk" refer="uzlet_kulcs">
+            <xs:selector xpath="alkalmazott"/>
+            <xs:field xpath="@uzlet_ref"/>
+        </xs:keyref>
+
+    </xs:element>
+
+    <!-- Komplex tipusok -->
+
+    <xs:complexType name="UgyfelTipus">
+        <xs:sequence>
+            <xs:element name="nev" type="xs:string"/>
+            <xs:element name="email" type="xs:string"/>
+            <xs:element name="telefonszam" type="xs:string"/>
+            <xs:element name="kartyaszam" type="xs:string"/>
+            <xs:element name="ceg" type="xs:boolean"/>
+            <xs:element name="cim" type="CimTipus"/>
+        </xs:sequence>
+        <xs:attribute name="cid" type="xs:string" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="CimTipus">
+        <xs:sequence>
+            <xs:element name="orszag" type="xs:string"/>
+            <xs:element name="varos" type="xs:string"/>
+            <xs:element name="iranyitoszam" type="xs:string"/>
+            <xs:element name="utca" type="xs:string"/>
+            <xs:element name="hazszam" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="AruTipus">
+        <xs:sequence>
+            <xs:element name="nev" type="xs:string"/>
+            <xs:element name="gyarto" type="xs:string"/>
+            <xs:element name="kategoria" type="xs:string"/>
+            <xs:element name="raktarkeszlet" type="xs:integer"/>
+            <xs:element name="garancia_honap" type="xs:integer"/>
+            <xs:element name="ertekelesek">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="ertek" type="xs:integer" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+        <xs:attribute name="aid" type="xs:string" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="RendelesTipus">
+        <xs:sequence>
+            <xs:element name="rendeles_datum" type="xs:date"/>
+            <xs:element name="fizetve" type="xs:boolean"/>
+            <xs:element name="osszeg" type="xs:integer"/>
+            <xs:element name="tetelek">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="tetel" maxOccurs="unbounded">
+                            <xs:complexType>
+                                <xs:sequence>
+                                    <xs:element name="darab" type="xs:integer"/>
+                                </xs:sequence>
+                                <xs:attribute name="aru_ref" type="xs:string" use="required"/>
+                            </xs:complexType>
+                        </xs:element>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+        <xs:attribute name="rid" type="xs:string" use="required"/>
+        <xs:attribute name="ugyfel_ref" type="xs:string" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="FutarTipus">
+        <xs:sequence>
+            <xs:element name="nev" type="xs:string"/>
+            <xs:element name="munkaido">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="kezd" type="xs:time"/>
+                        <xs:element name="vegez" type="xs:time"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="fizetes" type="xs:integer"/>
+            <xs:element name="benzinkartya" type="xs:boolean"/>
+        </xs:sequence>
+        <xs:attribute name="fid" type="xs:string" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="KiszallitasTipus">
+        <xs:sequence>
+            <xs:element name="felvett" type="xs:date"/>
+            <xs:element name="kiszallitva" type="xs:date"/>
+        </xs:sequence>
+        <xs:attribute name="kid" type="xs:string" use="required"/>
+        <xs:attribute name="rendeles_ref" type="xs:string" use="required"/>
+        <xs:attribute name="futar_ref" type="xs:string" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="JarmuTipus">
+        <xs:sequence>
+            <xs:element name="rendszam" type="xs:string"/>
+            <xs:element name="marka" type="xs:string"/>
+            <xs:element name="megtett_km" type="xs:integer"/>
+            <xs:element name="szervizben" type="xs:boolean"/>
+            <xs:element name="garancia_vege" type="xs:date"/>
+            <xs:element name="teherbiras_tonna" type="xs:integer"/>
+        </xs:sequence>
+        <xs:attribute name="jid" type="xs:string" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="UzlethelysegTipus">
+        <xs:sequence>
+            <xs:element name="cim" type="CimTipus"/>
+            <xs:element name="atvetel_lehetseges" type="xs:boolean"/>
+        </xs:sequence>
+        <xs:attribute name="uid" type="xs:string" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="AlkalmazottTipus">
+        <xs:sequence>
+            <xs:element name="nev" type="xs:string"/>
+            <xs:element name="fizetes" type="xs:integer"/>
+            <xs:element name="kezdes_eve" type="xs:gYear"/>
+            <xs:element name="vezeto" type="xs:boolean"/>
+        </xs:sequence>
+        <xs:attribute name="alid" type="xs:string" use="required"/>
+        <xs:attribute name="uzlet_ref" type="xs:string" use="required"/>
+    </xs:complexType>
+
+</xs:schema>
