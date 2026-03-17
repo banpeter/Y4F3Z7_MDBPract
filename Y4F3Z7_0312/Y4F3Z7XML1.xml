@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?xml-stylesheet type="text/xsl" href="style.xsl"?><vendeglatas>
+  <etterem ekod="e1">
+    <nev>Trófea</nev>
+    <cim>
+      <varos>Budapest</varos>
+      <utca>Visegrád</utca>
+      <hazszam>13</hazszam>
+    </cim>
+    <csillag>4</csillag>
+  </etterem>
+  <szakacs e_sz="e1" szkod="sz1">
+    <nev>Ötlet Elek</nev>
+    <reszleg>Saucier</reszleg>
+    <vegzettseg>Szakközépiskola</vegzettseg>
+    <vegzettseg>Le Cordon Bleu</vegzettseg>
+  </szakacs>
+  <gyakornok e_gy="e1" gykod="gy1">
+    <nev>Bordás Dávid</nev>
+    <gyakorlat>
+      <kezdete>2021.08.20.</kezdete>
+      <idotartama>2 hónap</idotartama>
+    </gyakorlat>
+    <muszak>Délelőtt</muszak>
+  </gyakornok>
+  <foszakacs e_f="e1" fkod="f1">
+    <nev>Havas Péter</nev>
+    <eletkor>35</eletkor>
+    <vegzettseg>Paul Bocuse Institute</vegzettseg>
+  </foszakacs>
+  <vendeg vkod="v1">
+    <nev>Gábor Sándor</nev>
+    <eletkor>23</eletkor>
+    <cim>
+      <varos>Budapest</varos>
+      <utca>Visegrád</utca>
+      <hazszam>13</hazszam>
+    </cim>
+  </vendeg>
+</vendeglatas>
