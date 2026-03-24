@@ -1,0 +1,73 @@
+
+
+
+xquery version "3.1";
+
+
+doc("/db/Y4F3Z7_XDM.xml")//bolt
+
+
+============================================
+
+
+xquery version "3.1";
+
+
+for $s in doc("/db/Y4F3Z7_XDM.xml")//alkalmazott
+where $s/fizetes >100000
+return
+<szakacs>  <alid>{data($s/@id)}</alid> 
+    <Nev>{data($s/nev)}</Nev>  
+    <fizetes>{data($s/fizetes)}</fizetes> 
+    <Vezeto>{$s/vezeto}</Vezeto>
+</szakacs>
+
+
+===================================================================
+
+xquery version "3.1";
+
+
+for $e in doc("/db/Y4F3Z7_XDM.xml")//jarmu
+where $e/teherbiras_tonna > 5
+return
+<jarmu>  <jid>{data($e/@id)}</jid>  
+<rendszam>{data($e/rendszam)}</rendszam>  
+<megtett_km>{data($e/megtett_km)}</megtett_km>  
+<garancia_vege>{data($e/garancia_vege)}</garancia_vege>
+</jarmu>
+
+=========================================
+xquery version "3.1";
+
+
+for $g in doc("/db/Y4F3Z7_XDM.xml")//aru 
+where $g/garancia_honap = '24'
+return
+<aru>  
+    <aid>{data($g/@id)}</aid>  <Nev>{data($g/nev)}</Nev> 
+    <raktarkeszlet>{data($g/raktarkeszlet)}</raktarkeszlet> 
+</aru>
+
+=======================================
+
+for $v in doc("/db/Y4F3Z7_XDM.xml")//ugyfel
+let $rendelesek :=  doc("/db/Y4F3Z7_XDM.xml")//rendeles[@ugyfel_ref = $v/@cid]
+for $r in $rendelesek
+return
+<adat>  
+<fizetve>{$r/fizetve}</fizetve>  
+<osszeg>{$r/osszeg}</osszeg>
+</adat>
+
+
+======================================
+
+xquery version "3.1";
+
+for $r in doc("/db/Y4F3Z7_XDM.xml")//alkalmazott return update value $r/fizetes with ($r/fizetes + 1000)
+
+===================================
+count(doc("/db/Y4F3Z7_XDM.xml")//rendeles)
+sum(doc("/db/Y4F3Z7_XDM.xml")//rendeles/osszeg)
+avg(doc("/db/Y4F3Z7_XDM.xml")//rendeles/osszeg)
