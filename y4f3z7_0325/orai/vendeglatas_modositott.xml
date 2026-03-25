@@ -1,0 +1,100 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<vendeglatas xmlns:xsl="http://www.w3.org/2001/XMLSchema" xsl:noNamespaceSchemaLocation="XY_XMLSSchema.xsd">
+  <!-- Ettermek -->
+  <etterem ekod="e1">
+    <nev>Trófea</nev>
+    <cim>
+      <varos>Budapest</varos>
+      <utca>Visegrád</utca>
+      <hazszam>13</hazszam>
+    </cim>
+    <csillag>4</csillag>
+  </etterem>
+  <etterem ekod="e2">
+    <nev>gundel</nev>
+    <cim>
+      <varos>Budapest</varos>
+      <utca>Gundel Károly</utca>
+      <hazszam>13</hazszam>
+    </cim>
+    <csillag>5</csillag>
+  </etterem>
+  <!-- Foszakacs -->
+  <foszakacs fkod="f1" e_f="e1">
+    <nev>Havas Péter </nev>
+    <eletkor>35</eletkor>
+    <vegzettseg>Paul Bocuse Institute</vegzettseg>
+  </foszakacs>
+  <foszakacs fkod="f2" e_f="e2">
+    <nev>Nagy Károly </nev>
+    <eletkor>20</eletkor>
+    <vegzettseg>Le Cordon Bleu</vegzettseg>
+  </foszakacs>
+  <!-- Szakacsok -->
+  <szakacs szkod="sz1" e_sz="e1">
+    <nev>Ötlet Elek</nev>
+    <reszleg>Saucier</reszleg>
+    <vegzettseg>Ssakközépiskola</vegzettseg>
+    <vegzettseg>Le Cordon Bleu</vegzettseg>
+    <eletkor>31</eletkor>
+    <vegzettseg>Paul Bocuse Institute</vegzettseg>
+  </szakacs>
+  <szakacs szkod="sz2" e_sz="e2">
+    <nev>Kocsis Tibor</nev>
+    <reszleg>Entremetier</reszleg>
+    <eletkor>31</eletkor>
+    <vegzettseg>Szakközépiskola</vegzettseg>
+    <vegzettseg>Le Cordon Bleu</vegzettseg>
+  </szakacs>
+  <szakacs szkod="sz3" e_sz="e3">
+    <nev>Tálas Levente</nev>
+    <reszleg>Saucier</reszleg>
+    <eletkor>31</eletkor>
+    <vegzettseg>Szakközépiskola</vegzettseg>
+  </szakacs>
+  <!-- Gyakornok -->
+  <gyakornok gykod="gy1" e_gy="e1">
+    <nev>Bordás Dávid</nev>
+    <gyakorlat>
+      <kezdete>2021.08.20.</kezdete>
+      <idotartama>2 hónap</idotartama>
+    </gyakorlat>
+    <muszak>Délelőtt</muszak>
+    <muszak>Este</muszak>
+  </gyakornok>
+  <gyakornok gykod="gy2" e_gy="e2">
+    <nev>Szilágyi István</nev>
+    <muszak>Délután</muszak>
+    <gyakorlat>
+      <kezdete>2021.06.01.</kezdete>
+      <idotartama>4 hónap</idotartama>
+    </gyakorlat>
+  </gyakornok>
+  <gyakornok gykod="gy3" e_gy="e3">
+    <nev> Ferenc</nev>
+    <muszak>Este</muszak>
+    <gyakorlat>
+      <kezdete>2021.07.02.</kezdete>
+      <idotartama>2 hónap</idotartama>
+    </gyakorlat>
+  </gyakornok>
+  <!-- Vendeg -->
+  <vendeg vkod="v1">
+    <nev>Gábor Sándor</nev>
+    <eletkor>23</eletkor>
+    <cim>
+      <varos>Budapest</varos>
+      <utca>Visegrád</utca>
+      <hazszam>13</hazszam>
+    </cim>
+  </vendeg>
+  <vendeg vkod="v2">
+    <nev>Gibsz Jakab</nev>
+    <eletkor>55</eletkor>
+    <cim>
+      <varos>Szeged</varos>
+      <utca>Gábor Dénes</utca>
+      <hazszam>5</hazszam>
+    </cim>
+  </vendeg>
+</vendeglatas>

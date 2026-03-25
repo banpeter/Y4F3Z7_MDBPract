@@ -1,0 +1,84 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<bolt xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="bolt_schema.xsd">
+  <!-- Ügyfelek -->
+  <ugyfel cid="c1">
+    <nev>Kiss Péter</nev>
+    <email>kiss.peter@gmail.hu</email>
+    <telefonszam>06301234567</telefonszam>
+    <kartyaszam>1234567812345678</kartyaszam>
+    <ceg>false</ceg>
+    <cim>
+      <orszag>Magyarország</orszag>
+      <varos>Budapest</varos>
+      <iranyitoszam>1111</iranyitoszam>
+      <utca>Fő utca</utca>
+      <hazszam>12</hazszam>
+    </cim>
+  </ugyfel>
+  <!-- Termékek -->
+  <aru aid="a10">
+    <nev>Laptop</nev>
+    <gyarto>Lenovo</gyarto>
+    <kategoria>Elektronika</kategoria>
+    <raktarkeszlet>5</raktarkeszlet>
+    <garancia_honap>24</garancia_honap>
+    <ertekelesek>
+      <ertek>5</ertek>
+      <ertek>5</ertek>
+      <ertek>4</ertek>
+    </ertekelesek>
+  </aru>
+  <!-- Rendelések -->
+  <rendeles rid="r100" ugyfel_ref="c1">
+    <rendeles_datum>2025-01-10</rendeles_datum>
+    <fizetve>true</fizetve>
+    <osszeg>500000</osszeg>
+    <tetelek>
+      <tetel aru_ref="a10">
+        <darab>1</darab>
+      </tetel>
+    </tetelek>
+  </rendeles>
+  <!-- Futárok -->
+  <futar fid="f20">
+    <nev>Nagy László</nev>
+    <munkaido>
+      <kezd>08:00</kezd>
+      <vegez>16:00</vegez>
+    </munkaido>
+    <fizetes>400000</fizetes>
+    <benzinkartya>true</benzinkartya>
+  </futar>
+  <!-- Kiszállítás -->
+  <kiszallitas rendeles_ref="r100" futar_ref="f20">
+    <felvett>2025-01-11</felvett>
+    <kiszallitva>2025-01-12</kiszallitva>
+  </kiszallitas>
+  <!-- Járművek -->
+  <jarmu jid="j5">
+    <rendszam>ABC-123</rendszam>
+    <marka>Ford</marka>
+    <megtett_km>120000</megtett_km>
+    <szervizben>false</szervizben>
+    <garancia_vege>2026-01-01</garancia_vege>
+    <teherbiras_tonna>6</teherbiras_tonna>
+  </jarmu>
+  <!-- Üzlethelyiségek -->
+  <uzlethelyseg uid="u3">
+    <cim>
+      <orszag>Magyarország</orszag>
+      <varos>Győr</varos>
+      <iranyitoszam>9022</iranyitoszam>
+      <utca>Baross utca</utca>
+      <hazszam>5</hazszam>
+    </cim>
+    <atvetel_lehetseges>true</atvetel_lehetseges>
+  </uzlethelyseg>
+  <!-- Alkalmazottak -->
+  <alkalmazott alid="a50" uzlet_ref="u3">
+    <nev>Szabó Anna</nev>
+    <fizetes>350000</fizetes>
+    <kezdes_eve>2020</kezdes_eve>
+    <vezeto>false</vezeto>
+  </alkalmazott>
+</bolt>

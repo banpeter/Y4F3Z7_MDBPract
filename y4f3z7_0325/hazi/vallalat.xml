@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<vallalat>
+  <alkalmazott id="emp1">
+    <nev>Kovács Béla</nev>
+    <osztaly>IT</osztaly>
+    <fizetes>550000</fizetes>
+    <beosztas>junior</beosztas>
+  </alkalmazott>
+  <alkalmazott id="emp2">
+    <nev>Tóth Mária</nev>
+    <osztaly>HR</osztaly>
+    <fizetes>462000</fizetes>
+    <beosztas>junior</beosztas>
+  </alkalmazott>
+</vallalat>
