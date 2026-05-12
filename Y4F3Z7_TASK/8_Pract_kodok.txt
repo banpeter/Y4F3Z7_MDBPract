@@ -1,0 +1,239 @@
+================================================================
+Modern adatbázis rendszerek MSc – 8. gyakorlat
+Oracle APEX – ORDBMS / UDT | Összegyűjtött kódok
+================================================================
+
+
+----------------------------------------------------------------
+0. Feladat – XMLType tábla létrehozása és XML feltöltése
+----------------------------------------------------------------
+
+-- 1. Tábla létrehozása XMLType oszloppal
+CREATE TABLE vendeglatas_xml (
+    id NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    adat XMLType
+);
+
+-- 2. Az XML tartalom beillesztése (a gyakorlat.xml teljes tartalma)
+INSERT INTO vendeglatas_xml (adat) VALUES (
+    XMLType('<?xml version="1.0" encoding="UTF-8"?>
+<vendeglatas>
+    <etterem ekod="e1"><nev>Trófea</nev>
+        <cim><varos>Budapest</varos><utca>Visegrád</utca><hazszam>13</hazszam></cim>
+        <csillag>4</csillag></etterem>
+    <etterem ekod="e2"><nev>gundel</nev>
+        <cim><varos>Budapest</varos><utca>Gundel Károly</utca><hazszam>13</hazszam></cim>
+        <csillag>5</csillag></etterem>
+    ... (teljes XML tartalom) ...
+</vendeglatas>')
+);
+COMMIT;
+
+
+----------------------------------------------------------------
+1. Feladat – XML adatok kiolvasása XMLTABLE segítségével
+----------------------------------------------------------------
+
+-- a) Az összes étterem kilistázása
+-- Étteremek kiolvasása az XML-ből relációs formában
+SELECT x.ekod,
+       x.nev,
+       x.varos,
+       x.utca,
+       x.hazszam,
+       x.csillag
+FROM vendeglatas_xml v,
+     XMLTABLE('/vendeglatas/etterem'
+         PASSING v.adat
+         COLUMNS
+             ekod    VARCHAR2(10)  PATH '@ekod',
+             nev     VARCHAR2(200) PATH 'nev',
+             varos   VARCHAR2(100) PATH 'cim/varos',
+             utca    VARCHAR2(200) PATH 'cim/utca',
+             hazszam VARCHAR2(10)  PATH 'cim/hazszam',
+             csillag NUMBER        PATH 'csillag'
+     ) x;
+
+-- b) Szűrés: csak az 5 csillagos éttermek
+SELECT x.ekod, x.nev, x.varos, x.csillag
+FROM vendeglatas_xml v,
+     XMLTABLE('/vendeglatas/etterem'
+         PASSING v.adat
+         COLUMNS
+             ekod    VARCHAR2(10)  PATH '@ekod',
+             nev     VARCHAR2(200) PATH 'nev',
+             varos   VARCHAR2(100) PATH 'cim/varos',
+             csillag NUMBER        PATH 'csillag'
+     ) x
+WHERE x.csillag = 5;
+
+-- c) Szakácsok kilistázása az éttermükkel együtt
+-- Szakácsok + étterem adatok JOIN-szerű XMLTABLE megközelítéssel
+SELECT sz.szkod, sz.nev AS szakacs_nev,
+       sz.reszleg, sz.eletkor,
+       e.nev AS etterem_nev
+FROM vendeglatas_xml v,
+     XMLTABLE('/vendeglatas/szakacs'
+         PASSING v.adat
+         COLUMNS
+             szkod   VARCHAR2(10)  PATH '@szkod',
+             e_sz    VARCHAR2(10)  PATH '@e_sz',
+             nev     VARCHAR2(200) PATH 'nev',
+             reszleg VARCHAR2(100) PATH 'reszleg',
+             eletkor NUMBER        PATH 'eletkor'
+     ) sz,
+     XMLTABLE('/vendeglatas/etterem'
+         PASSING v.adat
+         COLUMNS
+             ekod VARCHAR2(10)  PATH '@ekod',
+             nev  VARCHAR2(200) PATH 'nev'
+     ) e
+WHERE sz.e_sz = e.ekod;
+
+
+----------------------------------------------------------------
+2. Feladat – UDT (Object Type) létrehozása az XML struktúra alapján
+----------------------------------------------------------------
+
+-- a) Cím típus (az XML <cim> elem alapján)
+CREATE OR REPLACE TYPE cim_t AS OBJECT (
+    varos   VARCHAR2(100),
+    utca    VARCHAR2(200),
+    hazszam VARCHAR2(10)
+);
+/
+
+-- b) Étterem típus beágyazott objektummal és tagfüggvénnyel
+CREATE OR REPLACE TYPE etterem_t AS OBJECT (
+    ekod    VARCHAR2(10),
+    nev     VARCHAR2(200),
+    csillag NUMBER(1),
+    cim     cim_t,
+    MEMBER FUNCTION leiras RETURN VARCHAR2
+);
+/
+
+-- c) TYPE BODY tagfüggvény implementálása
+CREATE OR REPLACE TYPE BODY etterem_t AS
+    MEMBER FUNCTION leiras RETURN VARCHAR2 IS
+    BEGIN
+        RETURN SELF.nev || ' (' || SELF.csillag || ' csillag) – ' || SELF.cim.varos;
+    END leiras;
+END;
+/
+
+
+----------------------------------------------------------------
+3. Feladat – Object Table létrehozása és feltöltése XML adatokból
+----------------------------------------------------------------
+
+-- a) Object Table létrehozása
+CREATE TABLE ettermek OF etterem_t (
+    PRIMARY KEY (ekod)
+);
+
+-- b) Feltöltés XML-ből: INSERT … SELECT + XMLTABLE
+INSERT INTO ettermek
+SELECT etterem_t(
+    x.ekod,
+    x.nev,
+    x.csillag,
+    cim_t(x.varos, x.utca, x.hazszam)
+)
+FROM vendeglatas_xml v,
+     XMLTABLE('/vendeglatas/etterem'
+         PASSING v.adat
+         COLUMNS
+             ekod    VARCHAR2(10)  PATH '@ekod',
+             nev     VARCHAR2(200) PATH 'nev',
+             varos   VARCHAR2(100) PATH 'cim/varos',
+             utca    VARCHAR2(200) PATH 'cim/utca',
+             hazszam VARCHAR2(10)  PATH 'cim/hazszam',
+             csillag NUMBER        PATH 'csillag'
+     ) x;
+COMMIT;
+
+-- c) Ellenőrzés: az Object Table tartalma
+SELECT e.ekod, e.nev, e.csillag,
+       e.cim.varos, e.cim.utca
+FROM ettermek e;
+
+
+----------------------------------------------------------------
+4. Feladat – Lekérdezések az Object Table-ön
+----------------------------------------------------------------
+
+-- a) Tagfüggvény hívása lekérdezésben
+SELECT e.leiras() AS leiras
+FROM ettermek e;
+
+-- b) Aggregáció – átlagos csillagszám városonként
+SELECT e.cim.varos AS varos,
+       COUNT(*)    AS db,
+       AVG(e.csillag) AS atlag_csillag
+FROM ettermek e
+GROUP BY e.cim.varos
+ORDER BY atlag_csillag DESC;
+
+
+----------------------------------------------------------------
+5. Feladat – Módosítás és törlés
+----------------------------------------------------------------
+
+-- a) UDT attribútum módosítása
+UPDATE ettermek e
+SET e.csillag = 5
+WHERE e.ekod = 'e1';
+COMMIT;
+
+-- b) 3 csillagosnál kevesebb étterem törlése
+DELETE FROM ettermek e
+WHERE e.csillag < 3;
+COMMIT;
+
+-- Ellenőrzés:
+SELECT COUNT(*) AS maradt FROM ettermek;
+
+
+----------------------------------------------------------------
+6. Feladat – Kollekciós típus: a szakács végzettségei
+----------------------------------------------------------------
+
+-- a) VARRAY típus létrehozása
+CREATE OR REPLACE TYPE vegzettseg_va AS VARRAY(5) OF VARCHAR2(200);
+/
+
+-- b) Szakács típus VARRAY-jel
+CREATE OR REPLACE TYPE szakacs_t AS OBJECT (
+    szkod        VARCHAR2(10),
+    nev          VARCHAR2(200),
+    reszleg      VARCHAR2(100),
+    eletkor      NUMBER,
+    vegzettsegek vegzettseg_va
+);
+/
+
+CREATE TABLE szakacsok OF szakacs_t (
+    PRIMARY KEY (szkod)
+);
+
+-- c) Feltöltés kézzel (az XML vegzettség adatai alapján)
+INSERT INTO szakacsok VALUES (
+    szakacs_t('sz1', 'Ötlet Elek', 'Saucier', 30,
+        vegzettseg_va('Szakközépiskola', 'Le Cordon Bleu', 'Paul Bocuse Institute'))
+);
+
+INSERT INTO szakacsok VALUES (
+    szakacs_t('sz2', 'Kocsis Tibor', 'Entremetier', 30,
+        vegzettseg_va('Szakközépiskola', 'Le Cordon Bleu'))
+);
+COMMIT;
+
+-- d) VARRAY elemeinek lekérdezése TABLE() operátorral
+SELECT s.nev, s.reszleg, v.COLUMN_VALUE AS vegzettseg
+FROM szakacsok s,
+     TABLE(s.vegzettsegek) v;
+
+================================================================
+EOF
+================================================================

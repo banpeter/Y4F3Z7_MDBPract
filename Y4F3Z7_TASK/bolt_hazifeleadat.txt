@@ -1,0 +1,325 @@
+================================================================
+Modern adatbázis rendszerek MSc – 8. gyakorlat
+Házifeladat megoldás – bolt.xml alapján
+================================================================
+
+
+----------------------------------------------------------------
+0. Feladat – XMLType tábla létrehozása és XML feltöltése
+----------------------------------------------------------------
+
+-- 1. Tábla létrehozása XMLType oszloppal
+CREATE TABLE bolt_xml (
+    id   NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    adat XMLType
+);
+
+-- 2. Az XML tartalom beillesztése
+INSERT INTO bolt_xml (adat) VALUES (
+    XMLType('<?xml version="1.0" encoding="UTF-8"?>
+<bolt>
+    <ugyfel cid="c1">
+        <nev>Kiss Péter</nev>
+        <email>kiss.peter@gmail.hu</email>
+        <telefonszam>06301234567</telefonszam>
+        <kartyaszam>1234567812345678</kartyaszam>
+        <ceg>false</ceg>
+        <cim>
+            <orszag>Magyarország</orszag>
+            <varos>Budapest</varos>
+            <iranyitoszam>1111</iranyitoszam>
+            <utca>Fő utca</utca>
+            <hazszam>12</hazszam>
+        </cim>
+    </ugyfel>
+    <aru aid="a10">
+        <nev>Laptop</nev>
+        <gyarto>Lenovo</gyarto>
+        <kategoria>Elektronika</kategoria>
+        <raktarkeszlet>5</raktarkeszlet>
+        <garancia_honap>24</garancia_honap>
+        <ertekelesek>
+            <ertek>5</ertek>
+            <ertek>5</ertek>
+            <ertek>4</ertek>
+        </ertekelesek>
+    </aru>
+    <rendeles rid="r100" ugyfel_ref="c1">
+        <rendeles_datum>2025-01-10</rendeles_datum>
+        <fizetve>true</fizetve>
+        <osszeg>250000</osszeg>
+        <tetelek>
+            <tetel aru_ref="a10">
+                <darab>1</darab>
+            </tetel>
+        </tetelek>
+    </rendeles>
+    <futar fid="f20">
+        <nev>Nagy László</nev>
+        <munkaido>
+            <kezd>08:00</kezd>
+            <vegez>16:00</vegez>
+        </munkaido>
+        <fizetes>400000</fizetes>
+        <benzinkartya>true</benzinkartya>
+    </futar>
+    <kiszallitas futar_ref="f20" rendeles_ref="r100">
+        <felvett>2025-01-11</felvett>
+        <kiszallitva>2025-01-12</kiszallitva>
+    </kiszallitas>
+    <jarmu jid="j5">
+        <rendszam>ABC-123</rendszam>
+        <marka>Ford</marka>
+        <megtett_km>120000</megtett_km>
+        <szervizben>false</szervizben>
+        <garancia_vege>2026-01-01</garancia_vege>
+        <teherbiras_tonna>6</teherbiras_tonna>
+    </jarmu>
+    <uzlethelyseg uid="u3">
+        <cim>
+            <orszag>Magyarország</orszag>
+            <varos>Győr</varos>
+            <iranyitoszam>9022</iranyitoszam>
+            <utca>Baross utca</utca>
+            <hazszam>5</hazszam>
+        </cim>
+        <atvetel_lehetseges>true</atvetel_lehetseges>
+    </uzlethelyseg>
+    <alkalmazott alid="a50" uzlet_ref="u3">
+        <nev>Szabó Anna</nev>
+        <fizetes>350000</fizetes>
+        <kezdes_eve>2020</kezdes_eve>
+        <vezeto>false</vezeto>
+    </alkalmazott>
+</bolt>')
+);
+COMMIT;
+
+
+----------------------------------------------------------------
+1. Feladat – XML adatok kiolvasása XMLTABLE segítségével
+----------------------------------------------------------------
+
+-- a) Az összes ügyfél kilistázása
+SELECT x.cid,
+       x.nev,
+       x.email,
+       x.telefonszam,
+       x.varos,
+       x.utca,
+       x.hazszam
+FROM bolt_xml b,
+     XMLTABLE('/bolt/ugyfel'
+         PASSING b.adat
+         COLUMNS
+             cid         VARCHAR2(10)  PATH '@cid',
+             nev         VARCHAR2(200) PATH 'nev',
+             email       VARCHAR2(200) PATH 'email',
+             telefonszam VARCHAR2(20)  PATH 'telefonszam',
+             varos       VARCHAR2(100) PATH 'cim/varos',
+             utca        VARCHAR2(200) PATH 'cim/utca',
+             hazszam     VARCHAR2(10)  PATH 'cim/hazszam'
+     ) x;
+
+-- b) Szűrés: csak a kifizetett rendelések
+SELECT x.rid,
+       x.ugyfel_ref,
+       x.rendeles_datum,
+       x.osszeg
+FROM bolt_xml b,
+     XMLTABLE('/bolt/rendeles'
+         PASSING b.adat
+         COLUMNS
+             rid            VARCHAR2(10)  PATH '@rid',
+             ugyfel_ref     VARCHAR2(10)  PATH '@ugyfel_ref',
+             rendeles_datum VARCHAR2(20)  PATH 'rendeles_datum',
+             fizetve        VARCHAR2(10)  PATH 'fizetve',
+             osszeg         NUMBER        PATH 'osszeg'
+     ) x
+WHERE x.fizetve = 'true';
+
+-- c) Rendelések kilistázása az ügyfél nevével együtt (JOIN-szerű XMLTABLE)
+SELECT r.rid,
+       r.rendeles_datum,
+       r.osszeg,
+       u.nev AS ugyfel_nev
+FROM bolt_xml b,
+     XMLTABLE('/bolt/rendeles'
+         PASSING b.adat
+         COLUMNS
+             rid            VARCHAR2(10) PATH '@rid',
+             ugyfel_ref     VARCHAR2(10) PATH '@ugyfel_ref',
+             rendeles_datum VARCHAR2(20) PATH 'rendeles_datum',
+             osszeg         NUMBER       PATH 'osszeg'
+     ) r,
+     XMLTABLE('/bolt/ugyfel'
+         PASSING b.adat
+         COLUMNS
+             cid VARCHAR2(10)  PATH '@cid',
+             nev VARCHAR2(200) PATH 'nev'
+     ) u
+WHERE r.ugyfel_ref = u.cid;
+
+
+----------------------------------------------------------------
+2. Feladat – UDT (Object Type) létrehozása az XML struktúra alapján
+----------------------------------------------------------------
+
+-- a) Cím típus (az XML <cim> elem alapján)
+CREATE OR REPLACE TYPE bolt_cim_t AS OBJECT (
+    orszag       VARCHAR2(100),
+    varos        VARCHAR2(100),
+    iranyitoszam VARCHAR2(10),
+    utca         VARCHAR2(200),
+    hazszam      VARCHAR2(10)
+);
+/
+
+-- b) Ügyfél típus beágyazott cím objektummal és tagfüggvénnyel
+CREATE OR REPLACE TYPE ugyfel_t AS OBJECT (
+    cid         VARCHAR2(10),
+    nev         VARCHAR2(200),
+    email       VARCHAR2(200),
+    telefonszam VARCHAR2(20),
+    ceg         VARCHAR2(5),
+    cim         bolt_cim_t,
+    MEMBER FUNCTION leiras RETURN VARCHAR2
+);
+/
+
+-- c) TYPE BODY – tagfüggvény implementálása
+CREATE OR REPLACE TYPE BODY ugyfel_t AS
+    MEMBER FUNCTION leiras RETURN VARCHAR2 IS
+    BEGIN
+        RETURN SELF.nev || ' (' || SELF.email || ') – ' || SELF.cim.varos;
+    END leiras;
+END;
+/
+
+
+----------------------------------------------------------------
+3. Feladat – Object Table létrehozása és feltöltése XML adatokból
+----------------------------------------------------------------
+
+-- a) Object Table létrehozása
+CREATE TABLE ugyfelek OF ugyfel_t (
+    PRIMARY KEY (cid)
+);
+
+-- b) Feltöltés XML-ből: INSERT … SELECT + XMLTABLE
+INSERT INTO ugyfelek
+SELECT ugyfel_t(
+    x.cid,
+    x.nev,
+    x.email,
+    x.telefonszam,
+    x.ceg,
+    bolt_cim_t(x.orszag, x.varos, x.iranyitoszam, x.utca, x.hazszam)
+)
+FROM bolt_xml b,
+     XMLTABLE('/bolt/ugyfel'
+         PASSING b.adat
+         COLUMNS
+             cid          VARCHAR2(10)  PATH '@cid',
+             nev          VARCHAR2(200) PATH 'nev',
+             email        VARCHAR2(200) PATH 'email',
+             telefonszam  VARCHAR2(20)  PATH 'telefonszam',
+             ceg          VARCHAR2(5)   PATH 'ceg',
+             orszag       VARCHAR2(100) PATH 'cim/orszag',
+             varos        VARCHAR2(100) PATH 'cim/varos',
+             iranyitoszam VARCHAR2(10)  PATH 'cim/iranyitoszam',
+             utca         VARCHAR2(200) PATH 'cim/utca',
+             hazszam      VARCHAR2(10)  PATH 'cim/hazszam'
+     ) x;
+COMMIT;
+
+-- c) Ellenőrzés: az Object Table tartalma
+SELECT u.cid, u.nev, u.email,
+       u.cim.varos, u.cim.utca, u.cim.hazszam
+FROM ugyfelek u;
+
+
+----------------------------------------------------------------
+4. Feladat – Lekérdezések az Object Table-ön
+----------------------------------------------------------------
+
+-- a) Tagfüggvény hívása lekérdezésben
+SELECT u.leiras() AS leiras
+FROM ugyfelek u;
+
+-- b) Aggregáció – ügyfelek száma városonként
+SELECT u.cim.varos AS varos,
+       COUNT(*)    AS ugyfelek_szama
+FROM ugyfelek u
+GROUP BY u.cim.varos
+ORDER BY ugyfelek_szama DESC;
+
+
+----------------------------------------------------------------
+5. Feladat – Módosítás és törlés
+----------------------------------------------------------------
+
+-- a) UDT attribútum módosítása (email cím frissítése)
+UPDATE ugyfelek u
+SET u.email = 'kiss.peter@outlook.com'
+WHERE u.cid = 'c1';
+COMMIT;
+
+-- b) Céges ügyfelek törlése
+DELETE FROM ugyfelek u
+WHERE u.ceg = 'true';
+COMMIT;
+
+-- Ellenőrzés:
+SELECT COUNT(*) AS maradt FROM ugyfelek;
+
+
+----------------------------------------------------------------
+6. Feladat – Kollekciós típus: az áru értékelései
+----------------------------------------------------------------
+-- Az XML-ben az <aru> elemnek több <ertek> gyermeke is lehet.
+-- Ezt Oracle VARRAY típussal modellezzük.
+
+-- a) VARRAY típus létrehozása (max 10 értékelés)
+CREATE OR REPLACE TYPE ertekelesek_va AS VARRAY(10) OF NUMBER;
+/
+
+-- b) Áru típus VARRAY-jel
+CREATE OR REPLACE TYPE aru_t AS OBJECT (
+    aid            VARCHAR2(10),
+    nev            VARCHAR2(200),
+    gyarto         VARCHAR2(200),
+    kategoria      VARCHAR2(100),
+    raktarkeszlet  NUMBER,
+    garancia_honap NUMBER,
+    ertekelesek    ertekelesek_va
+);
+/
+
+CREATE TABLE aruk OF aru_t (
+    PRIMARY KEY (aid)
+);
+
+-- c) Feltöltés kézzel (az XML ertekelesek adatai alapján)
+INSERT INTO aruk VALUES (
+    aru_t('a10', 'Laptop', 'Lenovo', 'Elektronika', 5, 24,
+        ertekelesek_va(5, 5, 4))
+);
+COMMIT;
+
+-- d) VARRAY elemeinek lekérdezése TABLE() operátorral
+SELECT a.nev, a.gyarto, v.COLUMN_VALUE AS ertek
+FROM aruk a,
+     TABLE(a.ertekelesek) v;
+
+-- e) Átlagos értékelés árunként (TABLE() + AVG)
+SELECT a.nev,
+       AVG(v.COLUMN_VALUE) AS atlag_ertekeles
+FROM aruk a,
+     TABLE(a.ertekelesek) v
+GROUP BY a.aid, a.nev
+ORDER BY atlag_ertekeles DESC;
+
+================================================================
+EOF
+================================================================
