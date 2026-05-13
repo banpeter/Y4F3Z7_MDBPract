@@ -1,0 +1,100 @@
+
+
+
+MERGE (:Ugyfel {cid:'c1', nev:'Kiss Peter', varos:'Budapest', ceg:false});
+
+MERGE (:Aru {aid:'a10', nev:'Laptop', gyarto:'Lenovo',
+       kategoria:'Elektronika', raktarkeszlet:5,
+       ertekelesek:[5, 5, 4]});
+
+MERGE (:Rendeles {rid:'r100', datum:'2025-01-10',
+       fizetve:true, osszeg:250000});
+
+MERGE (:Futar {fid:'f20', nev:'Nagy Laszlo', fizetes:400000,
+       munkaido_kezd:'08:00', munkaido_vegez:'16:00',
+       benzinkartya:true});
+
+MERGE (:Jarmu {jid:'j5', rendszam:'ABC-123', marka:'Ford',
+       megtett_km:120000, szervizben:false,
+       garancia_vege:'2026-01-01', teherbiras_tonna:6});
+
+MERGE (:Uzlet {uid:'u3', varos:'Gyor', iranyitoszam:'9022',
+       utca:'Baross utca', hazszam:'5',
+       atvetel_lehetseges:true});
+
+MERGE (:Alkalmazott {alid:'a50', nev:'Szabo Anna',
+       fizetes:350000, kezdes_eve:2020, vezeto:false});
+
+
+// 1. 
+
+
+MATCH (u:Ugyfel {cid:'c1'}), (r:Rendeles {rid:'r100'})
+MERGE (u)-[:RENDELTE]->(r);
+
+
+MATCH (r:Rendeles {rid:'r100'}), (a:Aru {aid:'a10'})
+MERGE (r)-[:TARTALMAZZA {darab:1}]->(a);
+
+
+MATCH (f:Futar {fid:'f20'}), (r:Rendeles {rid:'r100'})
+MERGE (f)-[:KISZALLITJA {felvett:'2025-01-11',
+       kiszallitva:'2025-01-12'}]->(r);
+
+
+MATCH (f:Futar {fid:'f20'}), (j:Jarmu {jid:'j5'})
+MERGE (f)-[:HASZNALJA]->(j);
+
+
+MATCH (al:Alkalmazott {alid:'a50'}), (u:Uzlet {uid:'u3'})
+MERGE (al)-[:DOLGOZIK]->(u);
+
+
+// 2. 
+
+//Az összes rendelés és ügyfél neve, összeg szerint csökkentő sorrendben
+MATCH (u:Ugyfel)-[:RENDELTE]->(r:Rendeles)
+RETURN u.nev AS ugyfel, r.rid AS rendeles,
+       r.osszeg AS osszeg, r.datum AS datum
+ORDER BY r.osszeg DESC;
+
+//Csak a kifizetett rendelések és az azokat kiszállító futárok
+MATCH (f:Futar)-[:KISZALLITJA]->(r:Rendeles)<-[:RENDELTE]-(u:Ugyfel)
+WHERE r.fizetve = true
+RETURN f.nev AS futar, u.nev AS ugyfel, r.osszeg AS osszeg;
+
+//Melyik árucikkből mennyi fogyott összesen
+MATCH (r:Rendeles)-[t:TARTALMAZZA]->(a:Aru)
+RETURN a.nev AS aru, a.gyarto AS gyarto,
+       SUM(t.darab) AS eladott_db
+ORDER BY eladott_db DESC;
+
+
+// 3. 
+
+//Raktárkészlet csökkentése rendelés után
+MATCH (a:Aru {aid:'a10'})
+SET a.raktarkeszlet = a.raktarkeszlet - 1
+RETURN a.nev, a.raktarkeszlet;
+
+// Futar törlése az összes kapcsolatával együtt
+MATCH (f:Futar {fid:'f20'})
+DETACH DELETE f;
+
+//Jármű szervizelésre jelölése – új property sémaváltoztatás nélkül
+MATCH (j:Jarmu {jid:'j5'})
+SET j.szervizben = true, j.szerviz_datum = '2026-02-01'
+RETURN j.rendszam, j.szervizben;
+
+
+//4.
+
+
+MATCH (u:Ugyfel)-[:RENDELTE]->(r:Rendeles)
+      <-[:KISZALLITJA]-(f:Futar)-[:HASZNALJA]->(j:Jarmu)
+RETURN u.nev AS ugyfel, r.rid AS rendeles,
+       f.nev AS futar, j.marka AS jarmu, j.rendszam;
+
+
+MATCH (u:Ugyfel {cid:'c1'})-[*1..3]->(n)
+RETURN DISTINCT labels(n) AS tipus, n;
